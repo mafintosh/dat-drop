@@ -17,7 +17,10 @@ electron.app.on('ready', function () {
     tray = null
   })
 
-  tray = new electron.Tray(`${__dirname}/icon.png`)
+  var color = electron.systemPreferences.isDarkMode()
+    ? 'white'
+    : 'dark'
+  tray = new electron.Tray(`${__dirname}/icons/${color}.png`)
   tray.setToolTip('Drop files here')
   tray.on('drop-files', function (e, files) {
     win.webContents.send('drop', files)
