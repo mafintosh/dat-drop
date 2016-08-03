@@ -3,6 +3,8 @@ var swarm = require('hyperdrive-archive-swarm')
 var memdb = require('memdb')
 var drop = require('drag-and-drop-files')
 var file = require('random-access-file')
+var electron = require('electron')
+var basename = require('path').basename
 
 var db = memdb()
 var drive = hyperdrive(db)
@@ -14,7 +16,7 @@ var archive = drive.createArchive({
   }
 })
 
-drop(document.body, function (e) {
+function ondrop (e) {
   e.forEach(function (file) {
     files[file.name] = file.path
     archive.append(file.name)
@@ -24,4 +26,14 @@ drop(document.body, function (e) {
     archive.list().on('data', console.log.bind(console))
     console.log('finalized')
   })
+}
+
+drop(document.body, ondrop)
+electron.ipcRenderer.on('drop', function (e, files) {
+  ondrop(files.map(function (path) {
+    return {
+      name: basename(path),
+      path: path
+    }
+  }))
 })

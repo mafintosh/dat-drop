@@ -1,6 +1,7 @@
 var electron = require('electron')
 
 var win = null
+var tray = null
 
 electron.app.on('ready', function () {
   win = new electron.BrowserWindow({
@@ -12,5 +13,12 @@ electron.app.on('ready', function () {
 
   win.on('closed', function () {
     win = null
+    tray = null
+  })
+
+  tray = new electron.Tray(`${__dirname}/icon.png`)
+  tray.setToolTip('Drop files here')
+  tray.on('drop-files', function (e, files) {
+    win.webContents.send('drop', files)
   })
 })
