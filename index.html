@@ -8,40 +8,162 @@
       height: 100%;
       padding: 0;
       margin: 0;
-      background-color: #f5f5f5;
+      background-color: #293648;
+    }
+
+    .dat-progress-circle {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      line-height: 80px;
+      border-radius: 50%;
+      background: #394b5b;
+      background-image: -webkit-linear-gradient(left, transparent 50%, #2980B9 0);
+      background-image: linear-gradient(to right, transparent 50%, #2980B9 0);
+      color: transparent;
+      text-align: center;
+      -webkit-animation: done 100.1s linear infinite;
+              animation: done 100.1s linear infinite;
+      -webkit-animation-play-state: paused;
+              animation-play-state: paused;
+    }
+
+    #me .dat-progress-circle {
+      width: 120px;
+      height: 120px;
+      line-height: 120px;
+    }
+
+    #me .dat-progress-circle__avatar {
+      width: 108px;
+      height: 108px;
+      top: 6px;
+      left: 6px;
+    }
+
+    .dat-progress-circle:hover {
+      box-shadow: 0 1px 1rem rgba(0, 0, 0, 0.3);
+    }
+
+    @-webkit-keyframes spin {
+      to {
+        -webkit-transform: rotate(0.5turn);
+                transform: rotate(0.5turn);
+      }
+    }
+
+    @keyframes spin {
+      to {
+        -webkit-transform: rotate(0.5turn);
+                transform: rotate(0.5turn);
+      }
+    }
+    @-webkit-keyframes bg {
+      50% {
+        background: #2980B9;
+      }
+    }
+    @keyframes bg {
+      50% {
+        background: #2980B9;
+      }
+    }
+    @-webkit-keyframes done {
+      0% {
+        background-color: #394b5b;
+      }
+      99% {
+        background-color: #394b5b;
+      }
+      100% {
+        background-color: #35B44F;
+      }
+    }
+    @keyframes done {
+      0% {
+        background-color: #394b5b;
+      }
+      99% {
+        background-color: #394b5b;
+      }
+      100% {
+        background-color: #35B44F;
+      }
+    }
+    .dat-progress-circle::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 50%;
+      height: 100%;
+      border-radius: 0 100% 100% 0 / 50%;
+      background-color: inherit;
+      -webkit-transform-origin: left;
+              transform-origin: left;
+      -webkit-animation: spin 50s linear infinite, bg 100s step-end infinite;
+              animation: spin 50s linear infinite, bg 100s step-end infinite;
+      -webkit-animation-play-state: paused;
+              animation-play-state: paused;
+      -webkit-animation-delay: inherit;
+              animation-delay: inherit;
+    }
+
+    .dat-progress-circle__avatar {
+      position: absolute;
+      background-color: #65737F;
+      width: 72px;
+      height: 72px;
+      top: 4px;
+      left: 4px;
+      z-index: 3;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+
+    .dat-progress-circle__avatar img {
+      display: block;
+      width: 100%;
+    }
+
+    .dat-progress-circle {
+      display: inline-block;
     }
 
     .friend {
-      margin: 10px;
+      /*margin: 10px;*/
       transition: top 1s ease, left 1s ease;
-      border-radius: 100%;
+/*      border-radius: 100%;
       width: 80px;
       height: 80px;
       background-color: grey;
+*/
       position: absolute;
-      text-align: center;
+/*      text-align: center;
       font-family: monospace;
       line-height: 80px;
       font-weight: bold;
       background-size: 80px;
-    }
-
-    #me {
-      background-color: green;
-    }
+*/    }
 
     #network {
       position: absolute;
-      top: 50px;
-      bottom: 50px;
-      left: 50px;
-      right: 50px;
+      top: 20px;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
     }
   </style>
 </head>
 <body>
 <div id="network">
-<div class="friend" id="me"></div>
+  <div class="friend" id="me">
+    <div class="dat-progress-circle" style="animation-delay: -100s">
+      <div class="dat-progress-circle__avatar">
+        <img src="https://avatars2.githubusercontent.com/u/376661?v=3" />
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="status">Drop some files</div>

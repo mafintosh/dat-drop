@@ -48,17 +48,26 @@ function updateUI (feed, removed) {
     var $el = $('#' + id)
 
     if (!$el) {
+      if (catOffset === catLength) catOffset = 0
+      var cat = catOffset++ + 1
+      var catUrl = 'file://' + __dirname + '/images/cat-' + catOffset + '.png'
+      var html = `
+        <div class="dat-progress-circle" style="animation-delay: 0s">
+          <div class="dat-progress-circle__avatar">
+            <img src="${catUrl}" />
+          </div>
+        </div>
+      `
+
       $el = document.createElement('div')
+      $el.innerHTML = html
       $el.className = 'friend'
       $el.id = id
 
-      if (catOffset === catLength) catOffset = 0
-      var cat = catOffset++ + 1
-      $el.style.backgroundImage = 'url(file://' + __dirname + '/images/cat-' + catOffset + '.png'
       document.querySelector('#network').appendChild($el)
     }
 
-    $el.innerText = (100 * have / blocks).toFixed(2) + '%'
+    $el.querySelector('.dat-progress-circle').style.animationDelay = -(100 * have / blocks) + 's'
   }
 
   updatePos(peers)
@@ -83,8 +92,8 @@ function updatePos (peers) {
     el.style.top = Math.floor(factor * Math.sin(range) - 3 * wid + factor + elHei - 2 * elHei / 3) + 'px'
   }
 
-  document.querySelector('#me').style.left = Math.floor(elWid / 2) - wid + 'px'
-  document.querySelector('#me').style.top = Math.floor(elHei - 3 * wid) + 'px'
+  document.querySelector('#me').style.left = Math.floor(elWid / 2) - 60 + 'px'
+  document.querySelector('#me').style.top = Math.floor(elHei - 3 * 60) + 'px'
 }
 
 function ondrop (e) {
@@ -132,3 +141,5 @@ electron.ipcRenderer.on('drop', function (e, files) {
     }
   }))
 })
+
+updatePos([])

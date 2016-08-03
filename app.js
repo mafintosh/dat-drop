@@ -6,11 +6,11 @@ var tray = null
 electron.app.on('ready', function () {
   win = new electron.BrowserWindow({
     width: 800,
-    height: 600
+    height: 600,
+    backgroundColor: '#293648'
   })
 
   win.loadURL(`file://${__dirname}/index.html`)
-  win.webContents.openDevTools()
 
   win.on('closed', function () {
     win = null
