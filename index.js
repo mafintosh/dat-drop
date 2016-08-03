@@ -11,6 +11,8 @@ var $ = document.querySelector.bind(document)
 var db = memdb()
 var drive = hyperdrive(db)
 var files = {}
+var catLength = 7
+var catOffset = Math.floor(Math.random() * catLength)
 
 var archive = drive.createArchive({
   live: false,
@@ -21,9 +23,10 @@ var archive = drive.createArchive({
 
 function updateUI (feed, removed) {
   var blocks = feed.blocks
+  var peers = []
 
   if (removed && removed.stream && removed.stream.remoteId) {
-    var $old = $('#peer-' + removed.stream.remoteId.toString('hex'))
+    var $old = $('#friend-' + removed.stream.remoteId.toString('hex'))
     if ($old) $old.parentNode.removeChild($old)
   }
 
@@ -39,18 +42,49 @@ function updateUI (feed, removed) {
 
     if (!have) continue
 
-    var id = 'peer-' + peer.stream.remoteId.toString('hex')
+    peers.push(peer)
+
+    var id = 'friend-' + peer.stream.remoteId.toString('hex')
     var $el = $('#' + id)
 
     if (!$el) {
       $el = document.createElement('div')
-      $el.className = 'peer'
+      $el.className = 'friend'
       $el.id = id
-      document.body.appendChild($el)
+
+      if (catOffset === catLength) catOffset = 0
+      var cat = catOffset++ + 1
+      $el.style.backgroundImage = 'url(file://' + __dirname + '/images/cat-' + catOffset + '.png'
+      document.querySelector('#network').appendChild($el)
     }
 
-    $el.innerText = 'Uploading to friend, ' + (100 * have / blocks).toFixed(2) + '%, Up: ' + peer.uploadSpeed() + ', Down: ' + peer.downloadSpeed()
+    $el.innerText = (100 * have / blocks).toFixed(2) + '%'
   }
+
+  updatePos(peers)
+}
+
+function updatePos (peers) {
+  var wid = 40
+  var q = Math.PI / 2
+  var friends = peers.length
+
+  var elHei = document.querySelector('#network').offsetHeight
+  var elWid = document.querySelector('#network').offsetWidth
+  var factor = Math.min(elWid, elHei) * 0.8
+
+  for (var i = 0; i < friends; i++) {
+    var id = '#friend-' + peers[i].stream.remoteId.toString('hex')
+    var el = document.querySelector(id)
+    var offset = (Math.PI - q) / 2
+    var range = Math.PI + offset + (i + 1) * (q / (friends + 1))
+
+    el.style.left = Math.floor(Math.floor(elWid / 2) + factor * Math.cos(range) - wid) + 'px'
+    el.style.top = Math.floor(factor * Math.sin(range) - 3 * wid + factor + elHei - 2 * elHei / 3) + 'px'
+  }
+
+  document.querySelector('#me').style.left = Math.floor(elWid / 2) - wid + 'px'
+  document.querySelector('#me').style.top = Math.floor(elHei - 3 * wid) + 'px'
 }
 
 function ondrop (e) {
@@ -60,9 +94,6 @@ function ondrop (e) {
   })
 
   archive.finalize(function () {
-    $('#status').innerText = 'Sharing ' + e.length + ' files, ' + archive.key.toString('hex')
-    swarm(archive)
-
     archive.content.on('peer-add', function (peer) {
       peer.downloadSpeed = speedometer()
       peer.uploadSpeed = speedometer()
@@ -82,6 +113,8 @@ function ondrop (e) {
     })
 
     setInterval(update, 1000)
+    swarm(archive)
+    $('#status').innerText = 'Sharing ' + e.length + ' files, ' + archive.key.toString('hex')
 
     function update () {
       updateUI(archive.content)
