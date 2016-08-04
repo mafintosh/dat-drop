@@ -45,6 +45,14 @@
       box-shadow: 0 1px 1rem rgba(0, 0, 0, 0.3);
     }
 
+/*    .dat-progress-circle .dat-progress-circle__avatar img {
+      transition: -webkit-filter 0.1s linear;
+    }
+
+    .dat-progress-circle:hover .dat-progress-circle__avatar img {
+      -webkit-filter: blur(5px);
+    }
+*/
     @-webkit-keyframes spin {
       to {
         -webkit-transform: rotate(0.5turn);
@@ -103,7 +111,7 @@
     }
 
     .bounce-once {
-      animation: bounce-once 0.5s ease-in forwards;
+      animation: bounce-once 0.5s cubic-bezier(0.320, -0.280, 0.760, 1.310) forwards;
     }
 
     .dat-progress-circle::before {

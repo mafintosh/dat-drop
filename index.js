@@ -84,8 +84,7 @@ function updateUI (feed, removed) {
       $network.appendChild($el)
     }
 
-    $el.querySelector('.dat-progress-circle').style.animationDelay = -(100 * have / blocks) + 's'
-    if (have === blocks) $el.classList.add('bounce-once')
+    updateProgressBar($el, have, blocks)
   }
 
   updatePos(peers)
@@ -139,8 +138,7 @@ function ondrop (dropped) {
 
   function onprogress (data) {
     imported += data.length
-    $me.querySelector('.dat-progress-circle').style.animationDelay = -(100 * imported / size) + 's'
-    if (imported === size) $me.classList.add('bounce-once')
+    updateProgressBar($me, imported, size)
   }
 
   function finalize () {
@@ -165,13 +163,18 @@ function ondrop (dropped) {
 
       setInterval(update, 1000)
       replicate(archive)
-      $('#status').innerText = 'Sharing ' + cnt + ' files, ' + archive.key.toString('hex')
+      $('#status').innerHTML = 'Sharing ' + cnt + ' files, <a href="dat://' + archive.key.toString('hex') + '">dat://' + archive.key.toString('hex') + '</a>'
 
       function update () {
         updateUI(archive.content)
       }
     })
   }
+}
+
+function updateProgressBar ($el, fetched, total) {
+  $el.querySelector('.dat-progress-circle').style.animationDelay = -(100 * fetched / total) + 's'
+  if (fetched === total) $el.classList.add('bounce-once')
 }
 
 function replicate (archive) {

@@ -13,10 +13,13 @@
     "random-access-file": "^1.3.0",
     "speedometer": "^1.0.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "electron-packager": "^7.4.0"
+  },
   "scripts": {
     "start": "electron app.js",
-    "rebuild": "npm rebuild --runtime=electron --target=1.1.3 --disturl=https://atom.io/download/atom-shell --abi=48"
+    "rebuild": "npm rebuild --runtime=electron --target=1.1.3 --disturl=https://atom.io/download/atom-shell --abi=48",
+    "package": "electron-packager . --platform=darwin --arch=x64 --out=dist/ --extend-info extend.plist --app-bundle-id=com.drop.dat"
   },
   "repository": {
     "type": "git",

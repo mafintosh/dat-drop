@@ -26,3 +26,10 @@ electron.app.on('ready', function () {
     win.webContents.send('drop', files)
   })
 })
+
+electron.app.on('will-finish-launching', function () {
+  electron.app.on('open-url', function (ev, url) {
+    // send the url to the renderer process via rpc
+    ev.preventDefault()
+  })
+})
