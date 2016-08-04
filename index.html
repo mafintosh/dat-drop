@@ -90,6 +90,22 @@
         background-color: #35B44F;
       }
     }
+    @keyframes bounce-once {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.2);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .bounce-once {
+      animation: bounce-once 0.5s ease-in forwards;
+    }
+
     .dat-progress-circle::before {
       content: '';
       position: absolute;
@@ -158,7 +174,7 @@
 <body>
 <div id="network">
   <div class="friend" id="me">
-    <div class="dat-progress-circle" style="animation-delay: -100s">
+    <div class="dat-progress-circle" style="animation-delay: 0s">
       <div class="dat-progress-circle__avatar">
         <img src="https://avatars2.githubusercontent.com/u/376661?v=3" />
       </div>

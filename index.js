@@ -1,13 +1,18 @@
 var hyperdrive = require('hyperdrive')
-var swarm = require('hyperdrive-archive-swarm')
+var discovery = require('discovery-swarm')
+var defaults = require('datland-swarm-defaults')
 var memdb = require('memdb')
 var drop = require('drag-and-drop-files')
 var file = require('random-access-file')
 var electron = require('electron')
 var speedometer = require('speedometer')
+var fs = require('fs')
 var basename = require('path').basename
 
 var $ = document.querySelector.bind(document)
+var $me = $('#me')
+var $network = $('#network')
+
 var db = memdb()
 var drive = hyperdrive(db)
 var files = {}
@@ -20,6 +25,18 @@ var archive = drive.createArchive({
     return file(files[name])
   }
 })
+
+drop(document.body, ondrop)
+electron.ipcRenderer.on('drop', function (e, files) {
+  ondrop(files.map(function (path) {
+    return {
+      name: basename(path),
+      path: path
+    }
+  }))
+})
+
+updatePos([])
 
 function updateUI (feed, removed) {
   var blocks = feed.blocks
@@ -64,10 +81,11 @@ function updateUI (feed, removed) {
       $el.className = 'friend'
       $el.id = id
 
-      document.querySelector('#network').appendChild($el)
+      $network.appendChild($el)
     }
 
     $el.querySelector('.dat-progress-circle').style.animationDelay = -(100 * have / blocks) + 's'
+    if (have === blocks) $el.classList.add('bounce-once')
   }
 
   updatePos(peers)
@@ -78,13 +96,12 @@ function updatePos (peers) {
   var q = Math.PI / 2
   var friends = peers.length
 
-  var elHei = document.querySelector('#network').offsetHeight
-  var elWid = document.querySelector('#network').offsetWidth
+  var elHei = $network.offsetHeight
+  var elWid = $network.offsetWidth
   var factor = Math.min(elWid, elHei) * 0.8
 
   for (var i = 0; i < friends; i++) {
-    var id = '#friend-' + peers[i].stream.remoteId.toString('hex')
-    var el = document.querySelector(id)
+    var el = $('#friend-' + peers[i].stream.remoteId.toString('hex'))
     var offset = (Math.PI - q) / 2
     var range = Math.PI + offset + (i + 1) * (q / (friends + 1))
 
@@ -92,54 +109,83 @@ function updatePos (peers) {
     el.style.top = Math.floor(factor * Math.sin(range) - 3 * wid + factor + elHei - 2 * elHei / 3) + 'px'
   }
 
-  document.querySelector('#me').style.left = Math.floor(elWid / 2) - 60 + 'px'
-  document.querySelector('#me').style.top = Math.floor(elHei - 3 * 60) + 'px'
+  $me.style.left = Math.floor(elWid / 2) - 60 + 'px'
+  $me.style.top = Math.floor(elHei - 3 * 60) + 'px'
 }
 
-function ondrop (e) {
-  e.forEach(function (file) {
+function ondrop (dropped) {
+  var cnt = dropped.length
+  var size = 0
+  var imported = 0
+
+  dropped.forEach(function (file) { // TODO: wont work for dirs ...
+    size += file.size
+  })
+
+  archive.open(loop)
+
+  function loop () {
+    var file = dropped.shift()
+    if (!file) return finalize()
+
     files[file.name] = file.path
-    archive.append(file.name)
-  })
 
-  archive.finalize(function () {
-    archive.content.on('peer-add', function (peer) {
-      peer.downloadSpeed = speedometer()
-      peer.uploadSpeed = speedometer()
-      updateUI(archive.content)
+    var ws = archive.createFileWriteStream({type: 'file', name: file.name}, {indexing: true})
+    var rs = fs.createReadStream(file.path)
+
+    rs.pipe(ws).on('finish', loop)
+    rs.on('data', onprogress)
+  }
+
+  function onprogress (data) {
+    imported += data.length
+    $me.querySelector('.dat-progress-circle').style.animationDelay = -(100 * imported / size) + 's'
+    if (imported === size) $me.classList.add('bounce-once')
+  }
+
+  function finalize () {
+    archive.finalize(function () {
+      archive.content.on('peer-add', function (peer) {
+        peer.downloadSpeed = speedometer()
+        peer.uploadSpeed = speedometer()
+        updateUI(archive.content)
+      })
+
+      archive.content.on('peer-remove', function (peer) {
+        updateUI(archive.content, peer)
+      })
+
+      archive.content.on('upload', function (block, data, peer) {
+        peer.uploadSpeed(data.length)
+      })
+
+      archive.content.on('download', function (block, data, peer) {
+        peer.downloadSpeed(data.length)
+      })
+
+      setInterval(update, 1000)
+      replicate(archive)
+      $('#status').innerText = 'Sharing ' + cnt + ' files, ' + archive.key.toString('hex')
+
+      function update () {
+        updateUI(archive.content)
+      }
     })
-
-    archive.content.on('peer-remove', function (peer) {
-      updateUI(archive.content, peer)
-    })
-
-    archive.content.on('upload', function (block, data, peer) {
-      peer.uploadSpeed(data.length)
-    })
-
-    archive.content.on('download', function (block, data, peer) {
-      peer.downloadSpeed(data.length)
-    })
-
-    setInterval(update, 1000)
-    swarm(archive)
-    $('#status').innerText = 'Sharing ' + e.length + ' files, ' + archive.key.toString('hex')
-
-    function update () {
-      updateUI(archive.content)
-    }
-  })
+  }
 }
 
-drop(document.body, ondrop)
-
-electron.ipcRenderer.on('drop', function (e, files) {
-  ondrop(files.map(function (path) {
-    return {
-      name: basename(path),
-      path: path
+function replicate (archive) {
+  var swarm = discovery(defaults({
+    hash: false,
+    stream: function () {
+      return archive.replicate()
     }
   }))
-})
 
-updatePos([])
+  swarm.join(archive.discoveryKey)
+  swarm.once('error', function () {
+    swarm.listen(0)
+  })
+
+  swarm.listen(3282)
+}

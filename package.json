@@ -4,10 +4,11 @@
   "description": "Simplest tool to share files with friends",
   "main": "index.js",
   "dependencies": {
+    "datland-swarm-defaults": "^1.0.2",
+    "discovery-swarm": "^4.0.2",
     "drag-and-drop-files": "0.0.1",
     "electron-prebuilt": "1.1.3",
     "hyperdrive": "^7.1.1",
-    "hyperdrive-archive-swarm": "^4.0.0",
     "memdb": "^1.3.1",
     "random-access-file": "^1.3.0",
     "speedometer": "^1.0.0"
