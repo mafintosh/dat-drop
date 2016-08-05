@@ -19,13 +19,6 @@ var files = {}
 var catLength = 7
 var catOffset = Math.floor(Math.random() * catLength)
 
-var archive = drive.createArchive({
-  live: false,
-  file: function (name) {
-    return file(files[name])
-  }
-})
-
 drop(document.body, ondrop)
 electron.ipcRenderer.on('drop', function (e, files) {
   ondrop(files.map(function (path) {
@@ -87,6 +80,12 @@ function updateUI (feed, removed) {
     updateProgressBar($el, have, blocks)
   }
 
+  var localHave = 0
+  for (var i = 0; i < blocks; i++) {
+    if (feed.bitfield.get(i)) localHave++
+  }
+
+  updateProgressBar($me, localHave, blocks)
   updatePos(peers)
 }
 
@@ -112,7 +111,24 @@ function updatePos (peers) {
   $me.style.top = Math.floor(elHei - 3 * 60) + 'px'
 }
 
+function onlink (link) {
+  var archive = drive.createArchive(link, {
+    file: function (name) {
+      return file('/tmp/downloads/' + name)
+    }
+  })
+
+  joinSwarm(archive)
+}
+
 function ondrop (dropped) {
+  var archive = drive.createArchive({
+    live: false,
+    file: function (name) {
+      return file(files[name])
+    }
+  })
+
   var cnt = dropped.length
   var size = 0
   var imported = 0
@@ -143,36 +159,45 @@ function ondrop (dropped) {
 
   function finalize () {
     archive.finalize(function () {
-      archive.content.on('peer-add', function (peer) {
-        peer.downloadSpeed = speedometer()
-        peer.uploadSpeed = speedometer()
-        updateUI(archive.content)
-      })
-
-      archive.content.on('peer-remove', function (peer) {
-        updateUI(archive.content, peer)
-      })
-
-      archive.content.on('upload', function (block, data, peer) {
-        peer.uploadSpeed(data.length)
-      })
-
-      archive.content.on('download', function (block, data, peer) {
-        peer.downloadSpeed(data.length)
-      })
-
-      setInterval(update, 1000)
-      replicate(archive)
-      $('#status').innerHTML = 'Sharing ' + cnt + ' files, <a href="dat://' + archive.key.toString('hex') + '">dat://' + archive.key.toString('hex') + '</a>'
-
-      function update () {
-        updateUI(archive.content)
-      }
+      joinSwarm(archive)
     })
   }
 }
 
+function joinSwarm (archive) {
+  archive.open(function () {
+    archive.content.on('upload', function (block, data, peer) {
+      peer.uploadSpeed(data.length)
+    })
+
+    archive.content.on('download', function (block, data, peer) {
+      peer.downloadSpeed(data.length)
+    })
+
+    archive.content.on('peer-add', function (peer) {
+      peer.downloadSpeed = speedometer()
+      peer.uploadSpeed = speedometer()
+      updateUI(archive.content)
+    })
+
+    archive.content.on('peer-remove', function (peer) {
+      updateUI(archive.content, peer)
+    })
+
+    setInterval(update, 1000)
+    update()
+
+    function update () {
+      updateUI(archive.content)
+    }
+  })
+
+  replicate(archive)
+  $('#status').innerHTML = '<a href="dat://' + archive.key.toString('hex') + '">dat://' + archive.key.toString('hex') + '</a>'
+}
+
 function updateProgressBar ($el, fetched, total) {
+  if (!total) return
   $el.querySelector('.dat-progress-circle').style.animationDelay = -(100 * fetched / total) + 's'
   if (fetched === total) $el.classList.add('bounce-once')
 }
@@ -192,3 +217,9 @@ function replicate (archive) {
 
   swarm.listen(3282)
 }
+
+// onlink('1626c054742f8437c3f4a48f80c848897dd2c535b310566cdb8e6b1211010852')
+
+document.addEventListener('paste', function (e) {
+  onlink(e.clipboardData.getData('text').trim().split('/').pop())
+})

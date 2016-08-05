@@ -5,8 +5,8 @@ var tray = null
 
 electron.app.on('ready', function () {
   win = new electron.BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 550,
+    height: 500,
     backgroundColor: '#293648'
   })
 
